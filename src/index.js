@@ -3,16 +3,18 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import pizzaData from './data';
 
-const OPEN_HOUR = 10;
-const CLOSE_HOUR = 22;
+// ---------- Settings ----------
+const OPEN_HOUR = 10;     // 10am
+const CLOSE_HOUR = 22;    // 10pm
 const DELIVERY_FEE = 3;
-const STEP_SECONDS = 6;
+const STEP_SECONDS = 6;   // how fast the order tracker moves (demo)
 
 const ORDER_STEPS = {
     delivery: ['Order received', 'Preparing', 'In the oven', 'Out for delivery', 'Delivered'],
     pickup: ['Order received', 'Preparing', 'In the oven', 'Ready for pickup', 'Collected'],
 };
 
+// ---------- Helpers ----------
 function formatMinutes(mins) {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
@@ -40,10 +42,23 @@ function formatTime(date) {
     return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
+// Activity 4: always show prices with 2 decimal places, e.g. $6.00
+function formatPrice(amount) {
+    return `$${amount.toFixed(2)}`;
+}
+
+// Activity 2: turn 10 into "10am" and 22 into "10pm"
+function formatHour(hour) {
+    const suffix = hour < 12 ? 'am' : 'pm';
+    const h = hour % 12 === 0 ? 12 : hour % 12;
+    return `${h}${suffix}`;
+}
+
 function generateOrderId() {
     return '#' + Math.floor(1000 + Math.random() * 9000);
 }
 
+// ---------- Layout components ----------
 function Header({ showCart, cartCount, onCartClick }) {
     return (
         <header className="header">
@@ -75,47 +90,94 @@ function DemoBanner({ onExit }) {
     );
 }
 
+// ---------- Menu page ----------
+// Activity 5: the category buttons shown above the menu
+const CATEGORIES = [
+    { value: 'all', label: 'All' },
+    { value: 'vegetarian', label: 'Vegetarian' },
+    { value: 'meat', label: 'Meat' },
+];
+
 function Menu({ canOrder, cart, onAddToCart }) {
+    const [category, setCategory] = useState('all');
+
+    const pizzas = pizzaData;
+    const numPizzas = pizzas.length;
+
+    // Activity 5: filter() keeps only the pizzas in the chosen category
+    const shownPizzas =
+        category === 'all' ? pizzas : pizzas.filter((pizza) => pizza.category === category);
+
     return (
         <main className="menu">
             <h2>Our Menu</h2>
-            {canOrder && <p>Authentic Italian cuisine, all from our stone oven</p>}
 
-            <ul className="pizzas">
-                {pizzaData.map((pizza) => {
-                    const inCart = cart.find((item) => item.name === pizza.name);
-                    return (
-                        <Pizza
-                            key={pizza.name}
-                            name={pizza.name}
-                            ingredients={pizza.ingredients}
-                            price={pizza.price}
-                            photo={pizza.photoName}
-                            soldOut={pizza.soldOut}
-                            canOrder={canOrder}
-                            quantity={inCart ? inCart.quantity : 0}
-                            onAdd={() => onAddToCart(pizza)}
-                        />
-                    );
-                })}
-            </ul>
+            {/* Activity 3: empty-menu message when there are no pizzas at all */}
+            {numPizzas > 0 ? (
+                <>
+                    {canOrder && <p>Authentic Italian cuisine, all from our stone oven</p>}
+
+                    <div className="categories" role="group" aria-label="Filter by category">
+                        {CATEGORIES.map((cat) => (
+                            <button
+                                key={cat.value}
+                                className={`category-btn ${category === cat.value ? 'active' : ''}`}
+                                onClick={() => setCategory(cat.value)}
+                                aria-pressed={category === cat.value}
+                            >
+                                {cat.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {shownPizzas.length > 0 ? (
+                        <ul className="pizzas">
+                            {shownPizzas.map((pizza) => {
+                                const inCart = cart.find((item) => item.name === pizza.name);
+                                return (
+                                    <Pizza
+                                        key={pizza.name}
+                                        name={pizza.name}
+                                        ingredients={pizza.ingredients}
+                                        price={pizza.price}
+                                        photo={pizza.photoName}
+                                        soldOut={pizza.soldOut}
+                                        chefsPick={pizza.chefsPick}
+                                        canOrder={canOrder}
+                                        quantity={inCart ? inCart.quantity : 0}
+                                        onAdd={() => onAddToCart(pizza)}
+                                    />
+                                );
+                            })}
+                        </ul>
+                    ) : (
+                        <p className="empty-menu">No pizzas in this category yet.</p>
+                    )}
+                </>
+            ) : (
+                <p className="empty-menu">We're still working on our menu. Please come back later :)</p>
+            )}
         </main>
     );
 }
 
-function Pizza({ name, ingredients, price, photo, soldOut, canOrder, quantity, onAdd }) {
+function Pizza({ name, ingredients, price, photo, soldOut, chefsPick, canOrder, quantity, onAdd }) {
     let buttonText = '+ Add to cart';
     if (soldOut) buttonText = 'Unavailable';
-    else if (!canOrder) buttonText = `Opens at ${OPEN_HOUR}am`;
+    else if (!canOrder) buttonText = `Opens at ${formatHour(OPEN_HOUR)}`;
     else if (quantity > 0) buttonText = `+ Add another (${quantity})`;
 
     return (
         <li className={`pizza ${soldOut ? 'sold-out' : ''}`}>
             <img src={photo} alt={name} />
             <div>
-                <h3>{name}</h3>
+                <h3>
+                    {name}
+                    {/* Activity 4: Chef's pick badge (hidden if sold out) */}
+                    {chefsPick && !soldOut && <span className="chef-badge">★ Chef's pick</span>}
+                </h3>
                 <p>{ingredients}</p>
-                <span>{soldOut ? 'SOLD OUT' : `$${price}`}</span>
+                <span>{soldOut ? 'SOLD OUT' : formatPrice(price)}</span>
                 <button className="add-btn" onClick={onAdd} disabled={soldOut || !canOrder}>
                     {buttonText}
                 </button>
@@ -128,7 +190,7 @@ function CartBar({ totalItems, totalPrice, onCheckout }) {
     return (
         <div className="cart-bar" role="region" aria-label="Cart summary">
             <span>
-                {totalItems} {totalItems === 1 ? 'pizza' : 'pizzas'} · <strong>${totalPrice}</strong>
+                {totalItems} {totalItems === 1 ? 'pizza' : 'pizzas'} · <strong>{formatPrice(totalPrice)}</strong>
             </span>
             <button className="btn" onClick={onCheckout}>
                 Checkout →
@@ -137,7 +199,7 @@ function CartBar({ totalItems, totalPrice, onCheckout }) {
     );
 }
 
-function Order({ note, totalItems, totalPrice, onCheckout }) {
+function Order({ openHour, closeHour, note, totalItems, totalPrice, onCheckout }) {
     return (
         <div className="order">
             <p>
@@ -149,18 +211,24 @@ function Order({ note, totalItems, totalPrice, onCheckout }) {
                     </>
                 )}
             </p>
+            <p className="hours">
+                Open daily {formatHour(openHour)} – {formatHour(closeHour)}. Come visit us or order online.
+            </p>
             <button className="btn" onClick={onCheckout} disabled={totalItems === 0}>
-                {totalItems === 0 ? 'Add a pizza to order' : `Order now · $${totalPrice}`}
+                {totalItems === 0 ? 'Add a pizza to order' : `Order now · ${formatPrice(totalPrice)}`}
             </button>
         </div>
     );
 }
 
-function Footer({ status, demoMode, onStartDemo, totalItems, totalPrice, onCheckout }) {
+// Activity 2: opening hours now come in as props instead of being typed into the text
+function Footer({ openHour, closeHour, status, demoMode, onStartDemo, totalItems, totalPrice, onCheckout }) {
     let content;
     if (status.isOpen || demoMode) {
         content = (
             <Order
+                openHour={openHour}
+                closeHour={closeHour}
                 note={status.isOpen ? `Closing in ${status.timeText}` : 'demo mode'}
                 totalItems={totalItems}
                 totalPrice={totalPrice}
@@ -172,7 +240,9 @@ function Footer({ status, demoMode, onStartDemo, totalItems, totalPrice, onCheck
             <div className="closed">
                 <p>Sorry, we're closed</p>
                 <p className="countdown">We open in {status.timeText}</p>
-                <p className="hours">Open daily 10am – 10pm</p>
+                <p className="hours">
+                    We're happy to welcome you between {formatHour(openHour)} and {formatHour(closeHour)}.
+                </p>
                 <button className="link-btn" onClick={onStartDemo}>
                     Just looking? Try the ordering demo
                 </button>
@@ -182,6 +252,7 @@ function Footer({ status, demoMode, onStartDemo, totalItems, totalPrice, onCheck
     return <footer className="footer">{content}</footer>;
 }
 
+// ---------- Shared order summary (used on checkout + confirmation) ----------
 function OrderSummary({ title = 'Your order', cart, onChangeQty, deliveryFee, children }) {
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const total = subtotal + deliveryFee;
@@ -214,7 +285,7 @@ function OrderSummary({ title = 'Your order', cart, onChangeQty, deliveryFee, ch
                         ) : (
                             <span className="qty-static">× {item.quantity}</span>
                         )}
-                        <span className="cart-price">${item.price * item.quantity}</span>
+                        <span className="cart-price">{formatPrice(item.price * item.quantity)}</span>
                     </li>
                 ))}
             </ul>
@@ -222,17 +293,17 @@ function OrderSummary({ title = 'Your order', cart, onChangeQty, deliveryFee, ch
             <div className="summary-totals">
                 <div className="summary-row">
                     <span>Subtotal</span>
-                    <span>${subtotal}</span>
+                    <span>{formatPrice(subtotal)}</span>
                 </div>
                 {deliveryFee > 0 && (
                     <div className="summary-row">
                         <span>Delivery fee</span>
-                        <span>${deliveryFee}</span>
+                        <span>{formatPrice(deliveryFee)}</span>
                     </div>
                 )}
                 <div className="summary-row summary-total">
                     <span>Total</span>
-                    <span>${total}</span>
+                    <span>{formatPrice(total)}</span>
                 </div>
             </div>
             {children}
@@ -240,6 +311,7 @@ function OrderSummary({ title = 'Your order', cart, onChangeQty, deliveryFee, ch
     );
 }
 
+// ---------- Checkout page ----------
 function Field({ id, label, error, children }) {
     return (
         <div className={`field ${error ? 'has-error' : ''}`}>
@@ -271,7 +343,7 @@ function Checkout({ cart, onChangeQty, onBack, onPlaceOrder }) {
     function handleChange(e) {
         const { name, value } = e.target;
         setForm((current) => ({ ...current, [name]: value }));
-        setErrors((current) => ({ ...current, [name]: undefined }));
+        setErrors((current) => ({ ...current, [name]: undefined })); // clear error while typing
     }
 
     function validate() {
@@ -353,7 +425,7 @@ function Checkout({ cart, onChangeQty, onBack, onPlaceOrder }) {
                                     checked={form.method === 'delivery'}
                                     onChange={handleChange}
                                 />
-                                Delivery (+${DELIVERY_FEE})
+                                Delivery (+{formatPrice(DELIVERY_FEE)})
                             </label>
                             <label className={`option ${form.method === 'pickup' ? 'selected' : ''}`}>
                                 <input
@@ -394,7 +466,7 @@ function Checkout({ cart, onChangeQty, onBack, onPlaceOrder }) {
                     </Field>
 
                     <button type="submit" className="btn btn-full">
-                        Place order · ${total}
+                        Place order · {formatPrice(total)}
                     </button>
                 </form>
             </div>
@@ -402,11 +474,13 @@ function Checkout({ cart, onChangeQty, onBack, onPlaceOrder }) {
     );
 }
 
+// ---------- Confirmation page with live order tracker ----------
 function Confirmation({ order, onNewOrder }) {
     const steps = ORDER_STEPS[order.method];
     const [step, setStep] = useState(0);
     const isFinished = step === steps.length - 1;
 
+    // Move the tracker forward every few seconds until it reaches the last step
     useEffect(() => {
         if (isFinished) return;
         const timer = setTimeout(() => setStep((s) => s + 1), STEP_SECONDS * 1000);
@@ -480,6 +554,7 @@ function Confirmation({ order, onNewOrder }) {
     );
 }
 
+// ---------- App ----------
 function App() {
     const [now, setNow] = useState(new Date());
     const [cart, setCart] = useState([]);
@@ -493,6 +568,7 @@ function App() {
         return () => clearInterval(timer);
     }, []);
 
+    // Scroll to the top whenever the page changes
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [view]);
@@ -563,6 +639,8 @@ function App() {
                         />
                     )}
                     <Footer
+                        openHour={OPEN_HOUR}
+                        closeHour={CLOSE_HOUR}
                         status={status}
                         demoMode={demoMode}
                         onStartDemo={() => setDemoMode(true)}
