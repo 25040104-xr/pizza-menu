@@ -1,33 +1,48 @@
-<<<<<<< HEAD
-=======
-# Andy's Pizza Co. 🍕
+<h1 align="center">🍕 Andy's Pizza Co.</h1>
 
-A responsive pizza menu and ordering web app built with React.
+<p align="center">
+  <b>A responsive pizza menu and ordering web app.</b><br/>
+  Browse the menu, build your cart, and track your order live.
+</p>
 
-**Live demo:** [https://pizza-menu-brown-eight.vercel.app/]
+<p align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" />
+</p>
 
-## Features
-- Menu rendered from a data array with reusable components and props
-- Live open/closed status with a countdown to opening or closing time
-- Shopping cart with quantity controls and a running total
-- Checkout form with validation, and delivery or pickup options
-- Order confirmation with a live order-status tracker
-- Demo mode, so visitors can try ordering outside opening hours
-- Responsive layout, semantic HTML and accessible labels
+<p align="center">
+  🌐 <a href="https://pizza-menu-brown-eight.vercel.app/"><b>Try the live demo</b></a>
+</p>
 
-## Built with
-- React (useState, useEffect)
-- CSS (Flexbox, Grid, animations, media queries)
-- Deployed on Vercel
+---
 
-## What I learned
-- Lifting state up and sharing it between components through props
-- Updating arrays and objects in state without changing the originals (map, filter, spread)
-- Working out totals from state with reduce
+## ✨ Features
+
+| | |
+|---|---|
+| 🕒 **Live opening status** | A countdown to opening or closing time |
+| 🛒 **Shopping cart** | Quantity controls and a running total |
+| 📝 **Checkout** | Form validation, with delivery or pickup |
+| 📦 **Order tracker** | A live status tracker after you order |
+| 🧪 **Demo mode** | Visitors can try ordering outside opening hours |
+| 📱 **Responsive and accessible** | Semantic HTML and labels, works on any screen |
+
+## 🛠️ Built with
+
+React (`useState`, `useEffect`) · CSS (Flexbox, Grid, animations, media queries) · Deployed on Vercel
+
+## 📚 What I learned
+
+- Lifting state up and sharing it through props
+- Updating arrays and objects in state without changing the originals (`map`, `filter`, spread)
+- Working out totals with `reduce`
 - Building controlled forms with validation
-- Using useEffect timers, with cleanup, for live updates
+- Using `useEffect` timers, with cleanup, for live updates
 
-## Run locally
+## 💻 Run locally
+
+```bash
 npm install
 npm start
->>>>>>> 088708939822d23f1ce35aac43e1d268e85ef1fc
+```
